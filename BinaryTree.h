@@ -13,12 +13,12 @@ public:
   virtual ~BinarySearchTree();
 
   bool searchKeyIterative(const T &key) const {
-    Node *candidate = searchNodeIterative(key);
+    Node *candidate = *searchNodeIterative(key);
     return candidate && key == candidate->key_;
   }
 
   bool insertNode(const T &key) {
-    Node *candidate = searchNodeIterative(key);
+    Node *candidate = *searchNodeIterative(key);
     if (!candidate) {
       root_ = new Node(key);
     } else if (key == candidate->key_) {
@@ -32,8 +32,9 @@ public:
   }
 
   bool deleteNode(const T &key) {
-    Node *candidate = searchNodeIterative(key);
-    if (!candidate || key != candidate->key_) {
+    Node **pCandidate = searchNodeIterative(key);
+    Node *candidate = *pCandidate;
+    if (!*candidate || key != candidate->key_) {
       return false;
     }
     int nBranches = candidate->left_ != nullptr + candidate->right_ != nullptr;
@@ -48,16 +49,17 @@ public:
       } else {
         newCandidate = candidate->right_;
       }
-      if (candidate->p_) {
-        if (candidate->p_->left_ == candidate) {
-          candidate->p_->left_ = newCandidate;
-        } else {
-          candidate->p_->right_ = newCandidate;
-        }
-      } else {
-        root_ = newCandidate;
-      }
+      newCandidate->p_ = candidate->p_;
+      *pCandidate = newCandidate;
       delete candidate;
+    }
+    case 2: {
+      Node **pNewCandidate = &candidate->right_;
+      Node *newCandidate = *pCandidate;
+      while (newCandidate->left_) {
+        pNewCandidate = &newCandidate->left_;
+        newCandidate = *pCandidate;
+      }
     }
     }
   }
@@ -88,27 +90,28 @@ private:
     Node(T key, Node *p = nullptr, Node *left = nullptr, Node *right = nullptr)
         : key_(key), left_(left), right_(right), p_(p) {}
   };
-  Node *searchNodeIterative(const T &key) const {
-    Node *current = root_;
-    bool hasFound = false;
+  Node **searchNodeIterative(const T &key) const {
+    Node **pCurrent = &root_;
+    bool hasFound = root_ == nullptr;
     while (!hasFound) {
+      Node *current = *pCurrent;
       if (key == current->key_) {
         hasFound = true;
       } else if (key < current->key_) {
         if (current->left_) {
-          current = current->left_;
+          pCurrent = &current->left_;
         } else {
           hasFound = true;
         }
       } else {
         if (current->right_) {
-          current = current->right_;
+          pCurrent = &current->right_;
         } else {
           hasFound = true;
         }
       }
     }
-    return current;
+    return pCurrent;
   }
 
   void output(std::ostream &out, Node *root) const;

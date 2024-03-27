@@ -32,36 +32,50 @@ public:
   }
 
   bool deleteNode(const T &key) {
-    Node **pCandidate = searchNodeIterative(key);
-    Node *candidate = *pCandidate;
-    if (!*candidate || key != candidate->key_) {
+    Node **pTarget = searchNodeIterative(key);
+    Node *target = *pTarget;
+    if (!*target || key != target->key_) {
       return false;
     }
-    int nBranches = candidate->left_ != nullptr + candidate->right_ != nullptr;
-    switch (nBranches) {
-    case 0:
-      delete candidate;
-      break;
-    case 1: {
-      Node *newCandidate = nullptr;
-      if (candidate->left_) {
-        newCandidate = candidate->left_;
-      } else {
-        newCandidate = candidate->right_;
+    Node *targetLeft = target->left_;
+    Node *targetRight = target->right_;
+    Node *targetParent = target->p_;
+    delete target;
+    bool isDone = false;
+    while (!isDone) {
+      int nBranches = targetLeft != nullptr + targetRight != nullptr;
+      switch (nBranches) {
+      case 0:
+        isDone = true;
+        break;
+      case 1: {
+        Node *candidate = targetLeft ? targetLeft : targetRight;
+        candidate->p_ = targetParent;
+        *pTarget = candidate;
+        isDone = true;
+        break;
       }
-      newCandidate->p_ = candidate->p_;
-      *pCandidate = newCandidate;
-      delete candidate;
-    }
-    case 2: {
-      Node **pNewCandidate = &candidate->right_;
-      Node *newCandidate = *pCandidate;
-      while (newCandidate->left_) {
-        pNewCandidate = &newCandidate->left_;
-        newCandidate = *pCandidate;
+      case 2: {
+        Node **pNewTarget = nullptr;
+        Node *newTarget = *pTarget;
+        while (newTarget->left_) {
+          pNewTarget = &newTarget->left_;
+          newTarget = *pTarget;
+        }
+        *pTarget = newTarget;
+        std::swap(newTarget->left_, targetLeft);
+        std::swap(newTarget->p_, targetParent);
+        if (pNewTarget) {
+          std::swap(newTarget->right_, targetRight);
+          pTarget = pNewTarget;
+        } else {
+          isDone = true;
+        }
+        break;
+      }
       }
     }
-    }
+    return true;
   }
 
   void output(std::ostream &out) const;

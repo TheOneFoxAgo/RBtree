@@ -5,11 +5,15 @@
 
 template <class T> class BinarySearchTree {
 public:
-  BinarySearchTree();
+  BinarySearchTree() : root_(nullptr) {}
   BinarySearchTree(const BinarySearchTree<T> &scr) = delete;
-  BinarySearchTree(BinarySearchTree<T> &&scr) noexcept;
+  BinarySearchTree(BinarySearchTree<T> &&src) noexcept : root_(src.root_) {
+    src.root_ = nullptr;
+  }
   BinarySearchTree<T> &operator=(const BinarySearchTree<T> &src) = delete;
-  BinarySearchTree<T> &operator=(BinarySearchTree<T> &&src) noexcept;
+  BinarySearchTree<T> &operator=(BinarySearchTree<T> &&src) noexcept {
+    std::swap(root_, src.root_);
+  }
   virtual ~BinarySearchTree();
 
   bool searchKeyIterative(const T &key) const {
@@ -78,9 +82,9 @@ public:
     return true;
   }
 
-  void output(std::ostream &out) const;
+  void output(std::ostream &out) const { output(out, root_); }
 
-  int getNumberOfNodes() const;
+  int getNumberOfNodes() const { return getNumberOfNodes(root_); }
 
   int getHeight() const;
 
@@ -128,9 +132,25 @@ private:
     return pCurrent;
   }
 
-  void output(std::ostream &out, Node *root) const;
+  void output(std::ostream &out, Node *root) const {
+    out << '(';
+    out << root->key_;
+    if (root->left_) {
+      output(out, root->left_);
+    }
+    if (root->right_) {
+      output(out, root->right_);
+    }
+    out << ')';
+  }
 
-  int getNumberOfNodes(const Node *node) const;
+  int getNumberOfNodes(const Node *node) {
+    if (node) {
+      return 1 + getNumberOfNodes(node->left_) + getNumberOfNodes(node->right_);
+    } else {
+      return 0;
+    }
+  }
 
   int getHeight(const Node *node) const;
 

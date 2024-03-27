@@ -3,14 +3,17 @@
 
 void testTree() {
   BinarySearchTree<int> tree;
-
-  tree.insertNode(15);
-  tree.insertNode(23);
+  int nodes[] = {10, 5, 12, 4, 7, 11, 13, 6, 8};
+  for (int i : nodes) {
+    tree.insertNode(i);
+  }
   if (tree.insertNode(13)) {
     std::cout << "inserted\n";
+  } else {
+    std::cout << "not inserted\n";
   }
 
-  tree.output(std::cout); // (15(13)(23))
+  tree.output(std::cout);
   std::cout << '\n';
   std::cout << "count: " << tree.getNumberOfNodes() << '\n';
   std::cout << "height: " << tree.getHeight() << '\n';
@@ -18,6 +21,9 @@ void testTree() {
   if (!tree.searchKeyIterative(100)) {
     std::cout << "not found\n";
   }
+
+  // tree.deleteNode(5);
+  // tree.output(std::cout);
 
   if (!tree.deleteNode(100)) {
     std::cout << "not found\n";

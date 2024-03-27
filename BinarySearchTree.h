@@ -16,26 +16,24 @@ public:
   }
   virtual ~BinarySearchTree() {
     Node *current = root_;
-    bool isLeft = true;
     while (true) {
       if (current->left_) {
         current = current->left_;
-        isLeft = true;
       } else if (current->right_) {
         current = current->right_;
-        isLeft = false;
       } else {
         Node *next = current->p_;
-        delete current;
-        current = next;
-        if (!current) {
+        if (!next) {
+          delete current;
           break;
         }
-        if (isLeft) {
+        if (next->key_ > current->key_) {
           next->left_ = nullptr;
         } else {
           next->right_ = nullptr;
         }
+        delete current;
+        current = next;
       }
     }
   }
@@ -83,10 +81,10 @@ public:
       }
       case 2: {
         Node **pNewTarget = nullptr;
-        Node *newTarget = *pTarget;
+        Node *newTarget = targetRight;
         while (newTarget->left_) {
           pNewTarget = &newTarget->left_;
-          newTarget = *pTarget;
+          newTarget = *pNewTarget;
         }
         *pTarget = newTarget;
         std::swap(newTarget->left_, targetLeft);
@@ -172,6 +170,11 @@ private:
     }
   }
   void inorderWalk(Node *node) const;
+
+  void debug(const Node *node) const {
+    std::cout << node << ": " << node->key_ << ", left: " << node->left_
+              << ", right: " << node->right_ << '\n';
+  }
 
   Node *root_;
 };

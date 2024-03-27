@@ -14,13 +14,27 @@ public:
   BinarySearchTree<T> &operator=(BinarySearchTree<T> &&src) noexcept {
     std::swap(root_, src.root_);
   }
-  virtual ~BinarySearchTree();
+  virtual ~BinarySearchTree() {
+    Node *current = root_;
+    while (current) {
+      if (current->left_) {
+        current = current->left_;
+        continue;
+      }
+      if (current->right_) {
+        current = current->right_;
+        continue;
+      }
+      Node *next = current->p_;
+      delete current;
+      current = next;
+    }
+  }
 
   bool searchKeyIterative(const T &key) const {
     Node *candidate = *searchNodeIterative(key);
     return candidate && key == candidate->key_;
   }
-
   bool insertNode(const T &key) {
     Node *candidate = *searchNodeIterative(key);
     if (!candidate) {
@@ -34,7 +48,6 @@ public:
     }
     return true;
   }
-
   bool deleteNode(const T &key) {
     Node **pTarget = searchNodeIterative(key);
     Node *target = *pTarget;
@@ -81,21 +94,13 @@ public:
     }
     return true;
   }
-
   void output(std::ostream &out) const { output(out, root_); }
-
   int getNumberOfNodes() const { return getNumberOfNodes(root_); }
-
   int getHeight() const;
-
   void inorderWalkIterative() const;
-
   void inorderWalk() const;
-
   void walkByLevels() const;
-
   bool isSimilar(const BinarySearchTree<T> &other) const;
-
   bool isIdenticalKey(const BinarySearchTree<T> &other) const;
 
 private:
@@ -104,7 +109,6 @@ private:
     Node *left_;
     Node *right_;
     Node *p_;
-
     Node(T key, Node *p = nullptr, Node *left = nullptr, Node *right = nullptr)
         : key_(key), left_(left), right_(right), p_(p) {}
   };
@@ -131,7 +135,6 @@ private:
     }
     return pCurrent;
   }
-
   void output(std::ostream &out, Node *root) const {
     out << '(';
     out << root->key_;
@@ -143,7 +146,6 @@ private:
     }
     out << ')';
   }
-
   int getNumberOfNodes(const Node *node) {
     if (node) {
       return 1 + getNumberOfNodes(node->left_) + getNumberOfNodes(node->right_);
@@ -151,11 +153,9 @@ private:
       return 0;
     }
   }
-
   int getHeight(const Node *node) const;
-
   void inorderWalk(Node *node) const;
+
   Node *root_;
 };
-
 #endif

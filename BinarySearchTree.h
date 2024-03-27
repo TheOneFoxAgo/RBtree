@@ -16,18 +16,27 @@ public:
   }
   virtual ~BinarySearchTree() {
     Node *current = root_;
-    while (current) {
+    bool isLeft = true;
+    while (true) {
       if (current->left_) {
         current = current->left_;
-        continue;
-      }
-      if (current->right_) {
+        isLeft = true;
+      } else if (current->right_) {
         current = current->right_;
-        continue;
+        isLeft = false;
+      } else {
+        Node *next = current->p_;
+        delete current;
+        current = next;
+        if (!current) {
+          break;
+        }
+        if (isLeft) {
+          next->left_ = nullptr;
+        } else {
+          next->right_ = nullptr;
+        }
       }
-      Node *next = current->p_;
-      delete current;
-      current = next;
     }
   }
 
@@ -44,14 +53,14 @@ public:
     } else if (key > candidate->key_) {
       candidate->right_ = new Node(key, candidate);
     } else {
-      candidate->left = new Node(key, candidate);
+      candidate->left_ = new Node(key, candidate);
     }
     return true;
   }
   bool deleteNode(const T &key) {
-    Node **pTarget = searchNodeIterative(key);
+    Node **pTarget = const_cast<Node **>(searchNodeIterative(key));
     Node *target = *pTarget;
-    if (!*target || key != target->key_) {
+    if (!target || key != target->key_) {
       return false;
     }
     Node *targetLeft = target->left_;
@@ -60,7 +69,7 @@ public:
     delete target;
     bool isDone = false;
     while (!isDone) {
-      int nBranches = targetLeft != nullptr + targetRight != nullptr;
+      int nBranches = (targetLeft != nullptr) + (targetRight != nullptr);
       switch (nBranches) {
       case 0:
         isDone = true;
@@ -96,7 +105,7 @@ public:
   }
   void output(std::ostream &out) const { output(out, root_); }
   int getNumberOfNodes() const { return getNumberOfNodes(root_); }
-  int getHeight() const;
+  int getHeight() const { return getHeight(root_); }
   void inorderWalkIterative() const;
   void inorderWalk() const;
   void walkByLevels() const;
@@ -112,8 +121,8 @@ private:
     Node(T key, Node *p = nullptr, Node *left = nullptr, Node *right = nullptr)
         : key_(key), left_(left), right_(right), p_(p) {}
   };
-  Node **searchNodeIterative(const T &key) const {
-    Node **pCurrent = &root_;
+  Node *const *searchNodeIterative(const T &key) const {
+    Node *const *pCurrent = &root_;
     bool hasFound = root_ == nullptr;
     while (!hasFound) {
       Node *current = *pCurrent;
@@ -146,14 +155,22 @@ private:
     }
     out << ')';
   }
-  int getNumberOfNodes(const Node *node) {
+  int getNumberOfNodes(const Node *node) const {
     if (node) {
       return 1 + getNumberOfNodes(node->left_) + getNumberOfNodes(node->right_);
     } else {
       return 0;
     }
   }
-  int getHeight(const Node *node) const;
+  int getHeight(const Node *node) const {
+    if (!node) {
+      return 0;
+    } else {
+      int leftHeight = node->left_ ? getHeight(node->left_) : 0;
+      int rightHeight = node->right_ ? getHeight(node->right_) : 0;
+      return std::max(leftHeight, rightHeight) + 1;
+    }
+  }
   void inorderWalk(Node *node) const;
 
   Node *root_;

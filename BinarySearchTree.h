@@ -39,11 +39,11 @@ public:
   }
 
   bool searchKeyIterative(const T &key) const {
-    Node *candidate = *searchNodeIterative(key);
+    Node *candidate = searchNodeIterative(key);
     return candidate && key == candidate->key_;
   }
   bool insertNode(const T &key) {
-    Node *candidate = *searchNodeIterative(key);
+    Node *candidate = searchNodeIterative(key);
     if (!candidate) {
       root_ = new Node(key);
     } else if (key == candidate->key_) {
@@ -56,49 +56,47 @@ public:
     return true;
   }
   bool deleteNode(const T &key) {
-    Node **pTarget = const_cast<Node **>(searchNodeIterative(key));
-    Node *target = *pTarget;
+    Node *target = searchNodeIterative(key);
     if (!target || key != target->key_) {
       return false;
     }
-    Node *targetLeft = target->left_;
-    Node *targetRight = target->right_;
-    Node *targetParent = target->p_;
-    delete target;
-    bool isDone = false;
-    while (!isDone) {
-      int nBranches = (targetLeft != nullptr) + (targetRight != nullptr);
-      switch (nBranches) {
-      case 0:
-        isDone = true;
-        break;
-      case 1: {
-        Node *candidate = targetLeft ? targetLeft : targetRight;
-        candidate->p_ = targetParent;
-        *pTarget = candidate;
-        isDone = true;
-        break;
-      }
-      case 2: {
-        Node **pNewTarget = nullptr;
-        Node *newTarget = targetRight;
-        while (newTarget->left_) {
-          pNewTarget = &newTarget->left_;
-          newTarget = *pNewTarget;
-        }
-        *pTarget = newTarget;
-        std::swap(newTarget->left_, targetLeft);
-        std::swap(newTarget->p_, targetParent);
-        if (pNewTarget) {
-          std::swap(newTarget->right_, targetRight);
-          pTarget = pNewTarget;
-        } else {
-          isDone = true;
-        }
-        break;
-      }
-      }
+    int nBranches = (target->left_ != nullptr) + (target->right_ != nullptr);
+    switch (nBranches) {
+    case 0:
+      updateNodeParent(target, nullptr);
+      break;
+    case 1: {
+      Node *candidate = target->left_ ? target->left_ : target->right_;
+      candidate->p_ = target->p_;
+      updateNodeParent(target, candidate);
+      break;
     }
+    case 2: {
+      Node *candidate = target->right_;
+      while (candidate->left_) {
+        candidate = candidate->left_;
+      }
+      if (candidate == target->right_) {
+        candidate->left_ = target->left_;
+        candidate->p_ = target->p_;
+      } else {
+        candidate->p_->left_ = candidate->right_;
+        if (candidate->right_) {
+          candidate->right_->p_ = candidate->p_;
+        }
+
+        target->right_->p_ = candidate;
+        target->left_->p_ = candidate;
+
+        candidate->right_ = target->right_;
+        candidate->left_ = target->left_;
+        candidate->p_ = target->p_;
+      }
+      updateNodeParent(target, candidate);
+      break;
+    }
+    }
+    delete target;
     return true;
   }
   void output(std::ostream &out) const { output(out, root_); }
@@ -119,28 +117,27 @@ private:
     Node(T key, Node *p = nullptr, Node *left = nullptr, Node *right = nullptr)
         : key_(key), left_(left), right_(right), p_(p) {}
   };
-  Node *const *searchNodeIterative(const T &key) const {
-    Node *const *pCurrent = &root_;
+  Node *searchNodeIterative(const T &key) const {
+    Node *current = root_;
     bool hasFound = root_ == nullptr;
     while (!hasFound) {
-      Node *current = *pCurrent;
       if (key == current->key_) {
         hasFound = true;
       } else if (key < current->key_) {
         if (current->left_) {
-          pCurrent = &current->left_;
+          current = current->left_;
         } else {
           hasFound = true;
         }
       } else {
         if (current->right_) {
-          pCurrent = &current->right_;
+          current = current->right_;
         } else {
           hasFound = true;
         }
       }
     }
-    return pCurrent;
+    return current;
   }
   void output(std::ostream &out, Node *root) const {
     out << '(';
@@ -174,6 +171,17 @@ private:
   void debug(const Node *node) const {
     std::cout << node << ": " << node->key_ << ", left: " << node->left_
               << ", right: " << node->right_ << '\n';
+  }
+  void updateNodeParent(Node *target, Node *candidate) {
+    if (target->p_) {
+      if (target->p_->key_ > target->key_) {
+        target->p_->left_ = candidate;
+      } else {
+        target->p_->right_ = candidate;
+      }
+    } else {
+      root_ = candidate;
+    }
   }
 
   Node *root_;

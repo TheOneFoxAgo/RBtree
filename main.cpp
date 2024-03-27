@@ -22,8 +22,9 @@ void testTree() {
     std::cout << "not found\n";
   }
 
-  // tree.deleteNode(5);
-  // tree.output(std::cout);
+  tree.deleteNode(5);
+  tree.output(std::cout);
+  std::cout << '\n';
 
   if (!tree.deleteNode(100)) {
     std::cout << "not found\n";

@@ -104,7 +104,7 @@ public:
   }
   void output(std::ostream &out) const { output(out, root_); }
   int getNumberOfNodes() const { return getNumberOfNodes(root_); }
-  int getHeight() const { return getHeight(root_); }
+  int getHeight() const { return getHeight(root_) - 1; }
   void inorderWalkIterative() const;
   void inorderWalk() const;
   void walkByLevels() const;

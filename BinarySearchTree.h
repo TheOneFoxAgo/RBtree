@@ -1,6 +1,7 @@
 #ifndef _BINARY_SEARCH_TREE_H
 #define _BINARY_SEARCH_TREE_H
 
+#include "QueueArray.h"
 #include <iostream>
 
 template <class T> class BinarySearchTree {
@@ -110,7 +111,23 @@ public:
     }
   }
   void inorderWalk(std::ostream &out) const { inorderWalk(root_, out); }
-  void walkByLevels() const;
+  void walkByLevels(std::ostream &out) const {
+    if (!root_) {
+      return;
+    }
+    QueueArray<Node *> queue(1 << getHeight());
+    queue.enQueue(root_);
+    while (!queue.isEmpty()) {
+      Node *current = queue.deQueue();
+      out << current->key_ << ' ';
+      if (current->left_) {
+        queue.enQueue(current->left_);
+      }
+      if (current->right_) {
+        queue.enQueue(current->right_);
+      }
+    }
+  }
   bool isSimilar(const BinarySearchTree<T> &other) const {
     Node *current = min(root_);
     Node *otherCurrent = min(other.root_);

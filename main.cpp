@@ -1,5 +1,4 @@
 #include "BinarySearchTree.h"
-#include <algorithm>
 #include <iostream>
 
 void test(bool isSuccess, const char *successMessage, const char *failMessage) {
@@ -109,10 +108,29 @@ void testWalk() {
   std::cout << "Are there any similar keys, when both trees are empty?? "
             << ((forthTree.isIdenticalKey(fifthTree)) ? "yes" : "no") << '\n';
 }
+void testWidthWalk() {
+  BinarySearchTree<int> tree;
+  int nodes[]{29, 10, 14, 7,  18, 22, 24, 5,  6,  23, 17, 25, 15, 9,  1, 12,
+              2,  31, 11, 30, 4,  19, 3,  28, 26, 20, 13, 8,  21, 16, 27};
+  for (int i : nodes) {
+    tree.insertNode(i);
+  };
+  std::cout << "Tree looks like this: \n";
+  tree.output(std::cout);
+  std::cout << "\nInfix walk:\n";
+  tree.inorderWalk(std::cout);
+  std::cout << "\nWidth walk:\n";
+  tree.walkByLevels(std::cout);
+  std::cout << '\n';
+  tree.insertNode(0);
+  tree.walkByLevels(std::cout);
+  std::cout << '\n';
+}
 int main() {
   testTree();
   testDestructorAfterDelete();
   testWalk();
+  testWidthWalk();
   std::cout << "Success\n";
   return 0;
 }

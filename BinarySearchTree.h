@@ -74,10 +74,7 @@ public:
       break;
     }
     case 2: {
-      Node *candidate = target->right_;
-      while (candidate->left_) {
-        candidate = candidate->left_;
-      }
+      Node *candidate = min(target->right_);
       if (candidate == target->right_) {
         target->left_->p_ = candidate;
         candidate->left_ = target->left_;
@@ -105,11 +102,45 @@ public:
   void output(std::ostream &out) const { output(out, root_); }
   int getNumberOfNodes() const { return getNumberOfNodes(root_); }
   int getHeight() const { return getHeight(root_) - 1; }
-  void inorderWalkIterative() const;
-  void inorderWalk() const;
+  void inorderWalkIterative(std::ostream &out) const {
+    if (!root_) {
+      return;
+    }
+    Node *current = min(root_);
+    while (current) {
+      out << current->key_ << ' ';
+      current = successor(current);
+    }
+  }
+  void inorderWalk(std::ostream &out) const { inorderWalk(root_, out); }
   void walkByLevels() const;
-  bool isSimilar(const BinarySearchTree<T> &other) const;
-  bool isIdenticalKey(const BinarySearchTree<T> &other) const;
+  bool isSimilar(const BinarySearchTree<T> &other) const {
+    Node *current = min(root_);
+    Node *otherCurrent = min(other.root_);
+    while (current && otherCurrent) {
+      if (current->key_ == otherCurrent->key_) {
+        current = successor(current);
+        otherCurrent = successor(current);
+      } else {
+        return false;
+      }
+    }
+    return !(current || otherCurrent);
+  }
+  bool isIdenticalKey(const BinarySearchTree<T> &other) const {
+    Node *current = min(root_);
+    Node *otherCurrent = min(other.root_);
+    while (current && otherCurrent) {
+      if (current->key_ == otherCurrent->key_) {
+        return true;
+      } else if (current->key_ > otherCurrent->key_) {
+        otherCurrent = successor(otherCurrent);
+      } else {
+        current = successor(current);
+      }
+    }
+    return false;
+  }
 
 private:
   struct Node {
@@ -169,7 +200,14 @@ private:
       return std::max(leftHeight, rightHeight) + 1;
     }
   }
-  void inorderWalk(Node *node) const;
+  void inorderWalk(Node *node, std::ostream &out) const {
+    if (!node) {
+      return;
+    }
+    inorderWalk(node->left_, out);
+    out << node->key_ << ' ';
+    inorderWalk(node->right_, out);
+  }
   void updateNodeParent(Node *target, Node *candidate) {
     if (target->p_) {
       if (target->p_->key_ > target->key_) {
@@ -180,6 +218,24 @@ private:
     } else {
       root_ = candidate;
     }
+  }
+  Node *successor(Node *node) const {
+    if (node->right_) {
+      return min(node->right_);
+    } else {
+      Node *candidate = node->p_;
+      while (candidate && candidate->right_ == node) {
+        node = candidate;
+        candidate = candidate->p_;
+      }
+      return candidate;
+    }
+  }
+  Node *min(Node *node) const {
+    while (node->left_) {
+      node = node->left_;
+    }
+    return node;
   }
 
   Node *root_;

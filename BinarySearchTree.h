@@ -103,9 +103,6 @@ public:
   int getNumberOfNodes() const { return getNumberOfNodes(root_); }
   int getHeight() const { return getHeight(root_) - 1; }
   void inorderWalkIterative(std::ostream &out) const {
-    if (!root_) {
-      return;
-    }
     Node *current = min(root_);
     while (current) {
       out << current->key_ << ' ';
@@ -120,7 +117,7 @@ public:
     while (current && otherCurrent) {
       if (current->key_ == otherCurrent->key_) {
         current = successor(current);
-        otherCurrent = successor(current);
+        otherCurrent = successor(otherCurrent);
       } else {
         return false;
       }
@@ -232,6 +229,9 @@ private:
     }
   }
   Node *min(Node *node) const {
+    if (!node) {
+      return nullptr;
+    }
     while (node->left_) {
       node = node->left_;
     }

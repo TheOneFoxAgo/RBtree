@@ -1,4 +1,5 @@
 #include "BinarySearchTree.h"
+#include <algorithm>
 #include <iostream>
 
 void test(bool isSuccess, const char *successMessage, const char *failMessage) {
@@ -68,9 +69,50 @@ void testDestructorAfterDelete() {
   std::cout << "Testing destructor. If not segfaulted, test is successful.\n";
 }
 
+void testWalk() {
+  BinarySearchTree<int> tree;
+  int nodes[]{
+      23, 16, 12, 19, 17, 24, 5,  1, 4,  7, 11, 6,  22, 20, 9,
+      27, 10, 2,  13, 15, 25, 18, 3, 14, 8, 29, 26, 30, 21, 28,
+  };
+  for (int i : nodes) {
+    tree.insertNode(i);
+  }
+  std::cout << "Testing infix walking\n";
+  tree.inorderWalk(std::cout);
+  std::cout << '\n';
+  tree.inorderWalkIterative(std::cout);
+  std::cout << '\n';
+  BinarySearchTree<int> secondTree;
+  for (int i : nodes) {
+    secondTree.insertNode(((i + 6) % 30) + 1); // shuffling nodes.
+  }
+  std::cout << "Are two equal trees equal??? "
+            << ((tree.isSimilar(secondTree)) ? "yes" : "no") << '\n';
+  secondTree.insertNode(0);
+  std::cout << "Are two unequal trees equal??? "
+            << ((tree.isSimilar(secondTree)) ? "yes" : "no") << '\n';
+
+  BinarySearchTree<int> thirdTree;
+  int otherNodes[]{35, 33, 39, 32, 38, 31, 37, 40, 34, 36, 0};
+  for (int i : otherNodes) {
+    thirdTree.insertNode(i);
+  };
+  std::cout << "Are there any similar keys, when there are none?? "
+            << ((tree.isIdenticalKey(thirdTree)) ? "yes" : "no") << '\n';
+  std::cout << "Are there any similar keys, when there are one?? "
+            << ((secondTree.isIdenticalKey(thirdTree)) ? "yes" : "no") << '\n';
+  BinarySearchTree<int> forthTree;
+  BinarySearchTree<int> fifthTree;
+  std::cout << "Are two empty trees equal??? "
+            << ((forthTree.isSimilar(fifthTree)) ? "yes" : "no") << '\n';
+  std::cout << "Are there any similar keys, when both trees are empty?? "
+            << ((forthTree.isIdenticalKey(fifthTree)) ? "yes" : "no") << '\n';
+}
 int main() {
   testTree();
   testDestructorAfterDelete();
+  testWalk();
   std::cout << "Success\n";
   return 0;
 }

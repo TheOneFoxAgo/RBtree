@@ -14,6 +14,7 @@ public:
   BinarySearchTree<T> &operator=(const BinarySearchTree<T> &src) = delete;
   BinarySearchTree<T> &operator=(BinarySearchTree<T> &&src) noexcept {
     std::swap(root_, src.root_);
+    return *this;
   }
   virtual ~BinarySearchTree() {
     Node *current = root_;

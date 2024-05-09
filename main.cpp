@@ -1,5 +1,5 @@
 #include <iostream>
-#include "BinarySearchTree.h"
+#include "RBTree.hpp"
 
 void test(bool isSuccess, const char* successMessage, const char* failMessage)
 {
@@ -19,35 +19,35 @@ void testRB(const T& tree)
 }
 void testTree()
 {
-  BinarySearchTree< int, int > tree;
+  RBTree< int, int > tree;
   int nodes[]{ 10, 5, 13, 4, 7, 11, 14 };
   for (int i : nodes)
   {
-    tree.insertNode(i, 0);
+    tree.insert(i, 0);
   }
   testRB(tree);
-  test(tree.insertNode(13, 0), "inserted\n", "not inserted\n");
-  test(tree.insertNode(4, 0), "inserted\n", "not inserted\n");
+  test(tree.insert(13, 0), "inserted\n", "not inserted\n");
+  test(tree.insert(4, 0), "inserted\n", "not inserted\n");
   testRB(tree);
-  test(tree.searchKeyIterative(100), "found\n", "not found\n");
-  test(tree.searchKeyIterative(4), "found\n", "not found\n");
+  test(tree.find(100), "found\n", "not found\n");
+  test(tree.find(4), "found\n", "not found\n");
 
   int nodesToDelete[]{ 5, 11, 14, 15 };
   for (int i : nodesToDelete)
   {
     std::cout << "Trying to delete " << i << ": ";
-    test(tree.deleteNode(i), "deleted\n", "not deleted\n");
+    test(tree.erase(i), "deleted\n", "not deleted\n");
   }
   testRB(tree);
-  tree.insertNode(14, 0);
+  tree.insert(14, 0);
   testRB(tree);
 
-  BinarySearchTree< int, int > moved(std::move(tree));
+  RBTree< int, int > moved(std::move(tree));
 }
 
 void testDestructorAfterDelete()
 {
-  BinarySearchTree< int, int > tree;
+  RBTree< int, int > tree;
   int nodes[]{
     22376, 19148, 9064,  4536,  26826, 7510,  16348, 18792, 23507, 6724,  12960, 11559, 9879,  11023, 18260,
     30890, 3200,  2071,  28381, 32676, 17456, 448,   12726, 13838, 9644,  24207, 2139,  3207,  13422, 2533,
@@ -59,14 +59,14 @@ void testDestructorAfterDelete()
   };
   for (int i : nodes)
   {
-    tree.insertNode(i, 0);
+    tree.insert(i, 0);
   }
   testRB(tree);
   std::cout << "Deleting nodes\n";
   int nodesToDelete[]{ 12726, 2830, 1220 };
   for (int i : nodesToDelete)
   {
-    tree.deleteNode(i);
+    tree.erase(i);
   }
   testRB(tree);
   std::cout << "Testing destructor. If not segfaulted, test is successful.\n";
@@ -74,19 +74,19 @@ void testDestructorAfterDelete()
 
 void testWalk()
 {
-  BinarySearchTree< int, int > tree;
+  RBTree< int, int > tree;
   int nodes[]{
     23, 16, 12, 19, 17, 24, 5, 1, 4, 7, 11, 6, 22, 20, 9, 27, 10, 2, 13, 15, 25, 18, 3, 14, 8, 29, 26, 30, 21, 28,
   };
   for (int i : nodes)
   {
-    tree.insertNode(i, 0);
+    tree.insert(i, 0);
   }
   testRB(tree);
-  BinarySearchTree< int, int > secondTree;
+  RBTree< int, int > secondTree;
   for (int i : nodes)
   {
-    secondTree.insertNode(((i + 6) % 30) + 1, 0); // shuffling nodes.
+    secondTree.insert(((i + 6) % 30) + 1, 0); // shuffling nodes.
   }
   testRB(secondTree);
   // std::cout << "Are two equal trees equal??? "
@@ -95,15 +95,15 @@ void testWalk()
   // std::cout << "Are two unequal trees equal??? "
   //           << ((tree.isSimilar(secondTree)) ? "yes" : "no") << '\n';
 
-  BinarySearchTree< int, int > thirdTree;
+  RBTree< int, int > thirdTree;
   int otherNodes[]{ 35, 33, 39, 32, 38, 31, 37, 40, 34, 36, 0 };
   for (int i : otherNodes)
   {
-    thirdTree.insertNode(i, 0);
+    thirdTree.insert(i, 0);
   };
   testRB(thirdTree);
-  BinarySearchTree< int, int > forthTree;
-  BinarySearchTree< int, int > fifthTree;
+  RBTree< int, int > forthTree;
+  RBTree< int, int > fifthTree;
   // std::cout << "Are two empty trees equal??? "
   //           << ((forthTree.isSimilar(fifthTree)) ? "yes" : "no") << '\n';
 }

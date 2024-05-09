@@ -173,6 +173,24 @@ private:
     }
     delete target;
   }
+  void updateParentNode(Node* oldNode, Node* newNode)
+  {
+    if (oldNode->p)
+    {
+      if (compare_(oldNode->key, oldNode->p->key))
+      {
+        oldNode->p->left = newNode;
+      }
+      else
+      {
+        oldNode->p->right = newNode;
+      }
+    }
+    else
+    {
+      root_ = newNode;
+    }
+  }
   Node* findNode(const K& key) const
   {
     Node* current = root_;
@@ -208,24 +226,6 @@ private:
     }
     return current;
   }
-  void updateParentNode(Node* oldNode, Node* newNode)
-  {
-    if (oldNode->p)
-    {
-      if (compare_(oldNode->key, oldNode->p->key))
-      {
-        oldNode->p->left = newNode;
-      }
-      else
-      {
-        oldNode->p->right = newNode;
-      }
-    }
-    else
-    {
-      root_ = newNode;
-    }
-  }
   Node* successor(Node* node) const
   {
     if (node->right)
@@ -255,6 +255,41 @@ private:
     }
     return node;
   }
+  void rotateRight(Node* node)
+  {
+    assert(node->left);
+    updateParentNode(node, node->left);
+    Node* middle = node->left->right;
+
+    node->left->p = node->p;
+    node->left->right = node;
+
+    node->p = node->left;
+    node->left = middle;
+
+    if (middle)
+    {
+      middle->p = node;
+    }
+  }
+  void rotateLeft(Node* node)
+  {
+    assert(node->right);
+    updateParentNode(node, node->right);
+    Node* middle = node->right->left;
+
+    node->right->p = node->p;
+    node->right->left = node;
+
+    node->p = node->right;
+    node->right = middle;
+
+    if (middle)
+    {
+      middle->p = node;
+    }
+  }
+
   // returns black height. 0 means error.
   int isWeakRBTree(const Node* node) const
   {

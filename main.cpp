@@ -32,6 +32,12 @@ void testTree()
   test(tree.find(100), "found\n", "not found\n");
   test(tree.find(4), "found\n", "not found\n");
 
+  tree.insert(15, 0);
+  tree.insert(16, 0);
+  testRB(tree);
+  tree.walkByLevels(std::cout);
+  std::cout << '\n';
+
   int nodesToDelete[]{ 5, 11, 14, 15 };
   for (int i : nodesToDelete)
   {

@@ -1,7 +1,10 @@
 #ifndef RBTREE_HPP
 #define RBTREE_HPP
 
+#include <cassert>
 #include <functional>
+#include <ostream>
+#include <queue>
 #include <utility>
 
 template < class K, class T, class Compare = std::less< K > >
@@ -98,6 +101,29 @@ public:
     }
     return isWeakRBTree(root_);
   }
+  void walkByLevels(std::ostream& out) const
+  {
+    if (!root_)
+    {
+      return;
+    }
+    std::queue< Node* > queue;
+    queue.push(root_);
+    while (!queue.empty())
+    {
+      Node* current = queue.front();
+      queue.pop();
+      out << current->key << ' ';
+      if (current->left)
+      {
+        queue.push(current->left);
+      }
+      if (current->right)
+      {
+        queue.push(current->right);
+      }
+    }
+  }
 
 private:
   enum class Color
@@ -125,7 +151,7 @@ private:
     {
       return nullptr;
     }
-    Node* newNode = new Node{ key, value, Color::Black, candidate };
+    Node* newNode = new Node{ key, value, Color::Red, candidate };
     if (compare_(candidate->key, key))
     {
       candidate->right = newNode;
@@ -134,7 +160,40 @@ private:
     {
       candidate->left = newNode;
     }
+    insertFixup(newNode);
     return newNode;
+  }
+  void insertFixup(Node* target)
+  {
+    while (colorOf(target->p) == Color::Red)
+    {
+      target = partialFixup(target, target->p == target->p->p->left);
+    }
+    root_->color = Color::Black;
+  }
+  Node* partialFixup(Node* target, bool isParentLeft)
+  {
+    Node* grandpa = target->p->p;
+    Node* uncle = isParentLeft ? grandpa->right : grandpa->left;
+    if (colorOf(uncle) == Color::Red)
+    {
+      target->p->color = Color::Black;
+      uncle->color = Color::Black;
+      grandpa->color = Color::Red;
+      target = grandpa;
+    }
+    else
+    {
+      if ((target == target->p->right) == isParentLeft)
+      {
+        target = target->p;
+        rotate(target, isParentLeft);
+      }
+      target->p->color = Color::Black;
+      target->p->p->color = Color::Red;
+      rotate(target->p->p, !isParentLeft);
+    }
+    return target;
   }
   void eraseNode(Node* target)
   {
@@ -226,94 +285,105 @@ private:
     }
     return current;
   }
-  Node* successor(Node* node) const
+  Node* successor(Node* target) const
   {
-    if (node->right)
+    if (target->right)
     {
-      return minNode(node->right);
+      return minNode(target->right);
     }
     else
     {
-      Node* candidate = node->p;
-      while (candidate && candidate->right == node)
+      Node* candidate = target->p;
+      while (candidate && candidate->right == target)
       {
-        node = candidate;
+        target = candidate;
         candidate = candidate->p;
       }
       return candidate;
     }
   }
-  Node* minNode(Node* node) const
+  Node* minNode(Node* target) const
   {
-    if (!node)
+    if (!target)
     {
       return nullptr;
     }
-    while (node->left)
+    while (target->left)
     {
-      node = node->left;
+      target = target->left;
     }
-    return node;
+    return target;
   }
-  void rotateRight(Node* node)
+  void rotate(Node* target, bool isLeft)
   {
-    assert(node->left);
-    updateParentNode(node, node->left);
-    Node* middle = node->left->right;
+    if (isLeft)
+    {
+      rotateLeft(target);
+    }
+    else
+    {
+      rotateRight(target);
+    }
+  }
+  void rotateRight(Node* target)
+  {
+    assert(target->left);
+    updateParentNode(target, target->left);
+    Node* middle = target->left->right;
 
-    node->left->p = node->p;
-    node->left->right = node;
+    target->left->p = target->p;
+    target->left->right = target;
 
-    node->p = node->left;
-    node->left = middle;
+    target->p = target->left;
+    target->left = middle;
 
     if (middle)
     {
-      middle->p = node;
+      middle->p = target;
     }
   }
-  void rotateLeft(Node* node)
+  void rotateLeft(Node* target)
   {
-    assert(node->right);
-    updateParentNode(node, node->right);
-    Node* middle = node->right->left;
+    assert(target->right);
+    updateParentNode(target, target->right);
+    Node* middle = target->right->left;
 
-    node->right->p = node->p;
-    node->right->left = node;
+    target->right->p = target->p;
+    target->right->left = target;
 
-    node->p = node->right;
-    node->right = middle;
+    target->p = target->right;
+    target->right = middle;
 
     if (middle)
     {
-      middle->p = node;
+      middle->p = target;
     }
   }
 
   // returns black height. 0 means error.
-  int isWeakRBTree(const Node* node) const
+  int isWeakRBTree(const Node* target) const
   {
-    if (!node)
+    if (!target)
     {
       return 1;
     }
-    bool isRed = node->color == Color::Red;
-    if (isRed && (colorOf(node->left) == Color::Red || colorOf(node->right) == Color::Red))
+    bool isRed = target->color == Color::Red;
+    if (isRed && (colorOf(target->left) == Color::Red || colorOf(target->right) == Color::Red))
     {
       return 0;
     }
-    int result = isWeakRBTree(node->right);
-    if (!result || result != isWeakRBTree(node->left))
+    int result = isWeakRBTree(target->right);
+    if (!result || result != isWeakRBTree(target->left))
     {
       return 0;
     }
     return result + !isRed;
   }
-  Color colorOf(const Node* node) const
+  Color colorOf(const Node* target) const
   {
-    if (node)
+    if (target)
     {
-      return node->color;
+      return target->color;
     }
     else
     {

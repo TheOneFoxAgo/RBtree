@@ -139,6 +139,10 @@ private:
     Node* p = nullptr;
     Node* left = nullptr;
     Node* right = nullptr;
+    Node* child(bool isLeft)
+    {
+      return isLeft ? left : right;
+    }
   };
   Node* insertNode(Node* candidate, const K& key, const T& value)
   {
@@ -167,14 +171,14 @@ private:
   {
     while (colorOf(target->p) == Color::Red)
     {
-      target = partialFixup(target, target->p == target->p->p->left);
+      target = partialInsertFixup(target, target->p == target->p->p->left);
     }
     root_->color = Color::Black;
   }
-  Node* partialFixup(Node* target, bool isParentLeft)
+  Node* partialInsertFixup(Node* target, bool isParentLeft)
   {
     Node* grandpa = target->p->p;
-    Node* uncle = isParentLeft ? grandpa->right : grandpa->left;
+    Node* uncle = grandpa->child(!isParentLeft);
     if (colorOf(uncle) == Color::Red)
     {
       target->p->color = Color::Black;
@@ -197,6 +201,10 @@ private:
   }
   void eraseNode(Node* target)
   {
+    assert(target);
+    Color erasedColor = target->color;
+    Node* brokenNode = target->p;
+    bool isLeftBroken = target == root_ || target == target->p->left;
     int nBranches = (target->left != nullptr) + (target->right != nullptr);
     switch (nBranches)
     {
@@ -205,7 +213,7 @@ private:
       break;
     case 1:
     {
-      Node* candidate = target->left ? target->left : target->right;
+      Node* candidate = target->child(target->left);
       candidate->p = target->p;
       updateParentNode(target, candidate);
       break;
@@ -213,8 +221,12 @@ private:
     case 2:
     {
       Node* candidate = minNode(target->right);
+      erasedColor = candidate->color;
+      brokenNode = candidate;
+      isLeftBroken = false;
       if (candidate != target->right)
       {
+        isLeftBroken = true;
         candidate->p->left = candidate->right;
         if (candidate->right)
         {
@@ -226,11 +238,65 @@ private:
       target->left->p = candidate;
       candidate->left = target->left;
       candidate->p = target->p;
+      candidate->color = target->color;
       updateParentNode(target, candidate);
       break;
     }
     }
     delete target;
+    if (erasedColor == Color::Black)
+    {
+      eraseFixup(brokenNode, isLeftBroken);
+    }
+  }
+  void eraseFixup(Node* target, bool isLeftBroken)
+  {
+    assert(target);
+    Node* child = target->child(isLeftBroken);
+    Node* brother = target->child(!isLeftBroken);
+    while (target && colorOf(child) == Color::Black)
+    {
+      if (colorOf(brother) == Color::Red)
+      {
+        brother->color = Color::Black;
+        target->color = Color::Red;
+        rotate(target, isLeftBroken);
+        brother = target->child(!isLeftBroken);
+      }
+      assert(brother);
+      if (colorOf(brother->left) == Color::Black && colorOf(brother->right) == Color::Black)
+      {
+        brother->color = Color::Red;
+        isLeftBroken = target == root_ || target == target->p->left;
+        target = target->p;
+        child = target->child(isLeftBroken);
+        brother = target->child(!isLeftBroken);
+      }
+      else
+      {
+        if (colorOf(brother->right) == Color::Black)
+        {
+          brother->left->color = Color::Black;
+          brother->color = Color::Red;
+          rotate(brother, !isLeftBroken);
+          brother = target->child(!isLeftBroken);
+        }
+        brother->color = target->color;
+        target->color = Color::Black;
+        assert(brother->right);
+        brother->right->color = Color::Black;
+        rotate(target, isLeftBroken);
+        target = nullptr;
+      }
+    }
+    if (target)
+    {
+      target->child(isLeftBroken)->color = Color::Black;
+    }
+    else if (root_)
+    {
+      root_->color = Color::Black;
+    }
   }
   void updateParentNode(Node* oldNode, Node* newNode)
   {

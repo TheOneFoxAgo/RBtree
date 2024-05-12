@@ -5,6 +5,7 @@
 #include <functional>
 #include <ostream>
 #include <queue>
+#include <stdexcept>
 #include <utility>
 #include "RBTreeIterator.hpp"
 #include "RBTreeNode.hpp"
@@ -71,7 +72,33 @@ namespace demidenko
         }
       }
     }
-
+    T& operator[](const K& key)
+    {
+      Node* candidate = findNode(key);
+      if (!candidate || key != candidate->value.first)
+      {
+        candidate = insert(key, T());
+      }
+      return candidate->value.second;
+    }
+    T& at(const K& key)
+    {
+      Node* candidate = findNode(key);
+      if (candidate && key == candidate->value.first)
+      {
+        return candidate->value.second;
+      }
+      throw std::out_of_range("There are no such element\n");
+    }
+    const T& at(const K& key) const
+    {
+      Node* candidate = findNode(key);
+      if (candidate && key == candidate->value.first)
+      {
+        return candidate->value.second;
+      }
+      throw std::out_of_range("There are no such element\n");
+    }
     bool find(const K& key) const
     {
       Node* candidate = findNode(key);

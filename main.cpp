@@ -39,10 +39,6 @@ void testTree()
   testRB(tree);
   tree.walkByLevels(std::cout);
   std::cout << '\n';
-  std::transform(tree.begin(), tree.end(), std::ostream_iterator< int >(std::cout, " "), [&](auto pair) {
-    return pair.first;
-  });
-  std::cout << '\n';
 
   int nodesToDelete[]{ 5, 11, 14, 15 };
   for (int i : nodesToDelete)
@@ -119,11 +115,32 @@ void testWalk()
   // std::cout << "Are two empty trees equal??? "
   //           << ((forthTree.isSimilar(fifthTree)) ? "yes" : "no") << '\n';
 }
+void testIterators()
+{
+  demidenko::RBTree< int, int > tree;
+  int nodes[]{ 10, 5, 13, 4, 7, 11, 14 };
+  for (int i : nodes)
+  {
+    tree.insert(i, 0);
+  }
+  std::transform(tree.cbegin(), tree.cend(), std::ostream_iterator< int >(std::cout, " "), [&](auto pair) {
+    return pair.first;
+  });
+  std::cout << '\n';
+  tree.begin()->second = 9;
+  std::transform(tree.cbegin(), tree.cend(), std::ostream_iterator< int >(std::cout, " "), [&](auto pair) {
+    return pair.second;
+  });
+  // tree.cbegin()->second = 9;
+  // const demidenko::RBTree< int, int > consttree;
+  // consttree.begin()->second = 9;
+}
 int main()
 {
   testTree();
   testDestructorAfterDelete();
   testWalk();
+  testIterators();
   std::cout << "Success\n";
   return 0;
 }

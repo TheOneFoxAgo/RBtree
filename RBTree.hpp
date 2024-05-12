@@ -15,6 +15,8 @@ namespace demidenko
   class RBTree
   {
   public:
+    using Iterator = RBTreeIterator< K, T, Compare, false >;
+    using ConstIterator = RBTreeIterator< K, T, Compare, true >;
     RBTree():
       root_(nullptr),
       compare_({})
@@ -55,7 +57,7 @@ namespace demidenko
               delete current;
               break;
             }
-            if (compare_(current->key, next->key))
+            if (compare_(current->value.first, next->value.first))
             {
               next->left = nullptr;
             }
@@ -73,7 +75,7 @@ namespace demidenko
     bool find(const K& key) const
     {
       Node* candidate = findNode(key);
-      return candidate && key == candidate->key;
+      return candidate && key == candidate->value.first;
     }
     bool insert(const K& key, const T& value)
     {
@@ -82,7 +84,7 @@ namespace demidenko
     bool erase(const K& key)
     {
       Node* target = findNode(key);
-      if (!target || key != target->key)
+      if (!target || key != target->value.first)
       {
         return false;
       }
@@ -109,7 +111,7 @@ namespace demidenko
       {
         Node* current = queue.front();
         queue.pop();
-        out << current->key << ' ';
+        out << current->value.first << ' ';
         if (current->left)
         {
           queue.push(current->left);
@@ -120,21 +122,29 @@ namespace demidenko
         }
       }
     }
-    RBTreeIterator< K, T, Compare, false > begin()
+    Iterator begin()
     {
-      return RBTreeIterator< K, T, Compare, false >(minNode(root_));
+      return Iterator(minNode(root_));
     }
-    RBTreeIterator< K, T, Compare, true > cbegin()
+    ConstIterator begin() const
     {
-      return RBTreeIterator< K, T, Compare, true >(minNode(root_));
+      return ConstIterator(minNode(root_));
     }
-    RBTreeIterator< K, T, Compare, false > end()
+    ConstIterator cbegin() const
     {
-      return RBTreeIterator< K, T, Compare, false >(nullptr);
+      return ConstIterator(minNode(root_));
     }
-    RBTreeIterator< K, T, Compare, true > cend()
+    Iterator end()
     {
-      return RBTreeIterator< K, T, Compare, true >(nullptr);
+      return Iterator(nullptr);
+    }
+    ConstIterator end() const
+    {
+      return ConstIterator(nullptr);
+    }
+    ConstIterator cend() const
+    {
+      return ConstIterator(nullptr);
     }
 
   private:
@@ -144,15 +154,15 @@ namespace demidenko
     {
       if (!candidate)
       {
-        root_ = new Node{ key, value, Color::Black };
+        root_ = new Node{ std::make_pair(key, value), Color::Black };
         return root_;
       }
-      else if (key == candidate->key)
+      else if (key == candidate->value.first)
       {
         return nullptr;
       }
-      Node* newNode = new Node{ key, value, Color::Red, candidate };
-      if (compare_(candidate->key, key))
+      Node* newNode = new Node{ std::make_pair(key, value), Color::Red, candidate };
+      if (compare_(candidate->value.first, key))
       {
         candidate->right = newNode;
       }
@@ -298,7 +308,7 @@ namespace demidenko
     {
       if (oldNode->p)
       {
-        if (compare_(oldNode->key, oldNode->p->key))
+        if (compare_(oldNode->value.first, oldNode->p->value.first))
         {
           oldNode->p->left = newNode;
         }
@@ -318,11 +328,11 @@ namespace demidenko
       bool hasFound = root_ == nullptr;
       while (!hasFound)
       {
-        if (key == current->key)
+        if (key == current->value.first)
         {
           hasFound = true;
         }
-        else if (compare_(key, current->key))
+        else if (compare_(key, current->value.first))
         {
           if (current->left)
           {

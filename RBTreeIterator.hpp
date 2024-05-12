@@ -18,7 +18,7 @@ namespace demidenko
 
   public:
     using difference_type = std::ptrdiff_t;
-    using value_type = std::conditional_t< CONST, const std::pair< K, T >, std::pair< K, T > >;
+    using value_type = std::conditional_t< CONST, const std::pair< const K, T >, std::pair< const K, T > >;
     using reference = value_type&;
     using pointer = value_type*;
     using iterator_category = std::bidirectional_iterator_tag;
@@ -29,45 +29,43 @@ namespace demidenko
     RBTreeIterator< K, T, Compare, CONST >& operator++()
     {
       node_ = successor(node_);
-      updateOut();
       return *this;
     }
     RBTreeIterator< K, T, Compare, CONST > operator++(int)
     {
       RBTreeIterator< K, T, Compare, CONST > temp(*this);
       ++*this;
-      updateOut();
       return temp;
     }
     RBTreeIterator< K, T, Compare, CONST >& operator--()
     {
       node_ = predesessor(node_);
-      updateOut();
       return *this;
     }
     RBTreeIterator< K, T, Compare, CONST > operator--(int)
     {
       RBTreeIterator< K, T, Compare, CONST > temp(*this);
       --*this;
-      updateOut();
       return temp;
     }
 
-    std::enable_if_t< !CONST, value_type >& operator*()
+    template < class = std::enable_if< !CONST > >
+    value_type& operator*()
     {
-      return out_;
+      return node_->value;
     }
     const value_type& operator*() const
     {
-      return out_;
+      return node_->value;
     }
-    std::enable_if_t< !CONST, value_type >* operator->()
+    template < class = std::enable_if< !CONST > >
+    value_type* operator->()
     {
-      return std::addressof(out_);
+      return std::addressof(node_->value);
     }
     const value_type* operator->() const
     {
-      return std::addressof(out_);
+      return std::addressof(node_->value);
     }
 
     bool operator==(const RBTreeIterator< K, T, Compare, CONST >& other) const
@@ -82,10 +80,7 @@ namespace demidenko
   private:
     using Node = detail::Node< K, T >;
     explicit RBTreeIterator(Node* node):
-      node_(node)
-    {
-      updateOut();
-    };
+      node_(node){};
     Node* successor(Node* target) const
     {
       if (target->right)
@@ -130,16 +125,7 @@ namespace demidenko
         return candidate;
       }
     }
-    void updateOut()
-    {
-      if (node_)
-      {
-        out_.first = node_->key;
-        out_.second = node_->value;
-      }
-    }
     Node* node_;
-    value_type out_;
   };
 }
 

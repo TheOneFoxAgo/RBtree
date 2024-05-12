@@ -1,5 +1,8 @@
 #ifndef RBTREE_NODE_HPP
 #define RBTREE_NODE_HPP
+
+#include <utility>
+
 namespace demidenko
 {
   namespace detail
@@ -12,8 +15,7 @@ namespace demidenko
     template < class K, class T >
     struct Node
     {
-      K key;
-      T value;
+      std::pair< const K, T > value;
       Color color;
       Node* p = nullptr;
       Node* left = nullptr;

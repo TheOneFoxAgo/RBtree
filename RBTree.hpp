@@ -54,7 +54,7 @@ namespace demidenko
           {
             currentSrcNode = currentSrcNode->right;
             currentNewNode->right = new Node{ currentSrcNode->value, currentSrcNode->color, currentNewNode };
-            currentNewNode = currentSrcNode->right;
+            currentNewNode = currentNewNode->right;
             gotoMinCopying();
           }
           else
@@ -79,7 +79,13 @@ namespace demidenko
     {
       src.root_ = nullptr;
     }
-    RBTree< K, T, Compare >& operator=(const RBTree< K, T, Compare >& src) = delete;
+    RBTree< K, T, Compare >& operator=(const RBTree< K, T, Compare >& src)
+    {
+      RBTree< K, T, Compare > newTree(src);
+      std::swap(root_, newTree.root_);
+      std::swap(compare_, newTree.compare_);
+      return *this;
+    }
     RBTree< K, T, Compare >& operator=(RBTree< K, T, Compare >&& src) noexcept
     {
       std::swap(root_, src.root_);
@@ -344,27 +350,30 @@ namespace demidenko
           brother = target->child(!isLeftBroken);
         }
         assert(brother);
-        if (colorOf(brother->left) == Color::Black && colorOf(brother->right) == Color::Black)
+        if (colorOf(brother->child(isLeftBroken)) == Color::Black && colorOf(brother->child(!isLeftBroken)) == Color::Black)
         {
           brother->color = Color::Red;
-          isLeftBroken = target == root_ || target == target->p->left;
+          isLeftBroken = target == root_ || target == target->p->child(isLeftBroken);
           target = target->p;
-          child = target->child(isLeftBroken);
-          brother = target->child(!isLeftBroken);
+          if (target)
+          {
+            child = target->child(isLeftBroken);
+            brother = target->child(!isLeftBroken);
+          }
         }
         else
         {
-          if (colorOf(brother->right) == Color::Black)
+          if (colorOf(brother->child(!isLeftBroken)) == Color::Black)
           {
-            brother->left->color = Color::Black;
+            brother->child(isLeftBroken)->color = Color::Black;
             brother->color = Color::Red;
             rotate(brother, !isLeftBroken);
             brother = target->child(!isLeftBroken);
           }
           brother->color = target->color;
           target->color = Color::Black;
-          assert(brother->right);
-          brother->right->color = Color::Black;
+          assert(brother->child(!isLeftBroken));
+          brother->child(!isLeftBroken)->color = Color::Black;
           rotate(target, isLeftBroken);
           target = nullptr;
         }
@@ -503,7 +512,6 @@ namespace demidenko
       int result = isWeakRBTree(target->right);
       if (!result || result != isWeakRBTree(target->left))
       {
-        // std::cout << target->right << ' ' << target->left << '\n';
         return 0;
       }
       return result + !isRed;

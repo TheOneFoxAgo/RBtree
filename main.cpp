@@ -1,26 +1,29 @@
 #include <algorithm>
+#include <cassert>
 #include <iostream>
 #include <iterator>
 #include "RBTree.hpp"
 
-void test(bool isSuccess, const char* successMessage, const char* failMessage)
+void test(const char* testName, bool isSuccess)
 {
+  std::cout << testName << ": ";
   if (isSuccess)
   {
-    std::cout << successMessage;
+    std::cout << "\033[32;1mSuccess\033[0m\n";
   }
   else
   {
-    std::cout << failMessage;
+    std::cout << "\033[31;1mFail\033[0m\n";
   }
 }
 template < class T >
 void testRB(const T& tree)
 {
-  test(tree.isRBTree(), "Tree is still RBTree\n", "Tree is not RBTree\n");
+  test("RB test", tree.isRBTree());
 }
 void testTree()
 {
+  std::cout << "Basic tests\n";
   demidenko::RBTree< int, int > tree;
   int nodes[]{ 10, 5, 13, 4, 7, 11, 14 };
   for (int i : nodes)
@@ -28,33 +31,108 @@ void testTree()
     tree.insert(i, 0);
   }
   testRB(tree);
-  test(tree.insert(13, 0), "inserted\n", "not inserted\n");
-  test(tree.insert(4, 0), "inserted\n", "not inserted\n");
+  test("insert existing(13)", !tree.insert(13, 0));
+  test("insert existing(4)", !tree.insert(4, 0));
   testRB(tree);
-  test(tree.find(100), "found\n", "not found\n");
-  test(tree.find(4), "found\n", "not found\n");
+  test("find existing(4)", tree.find(4));
+  test("find not existing(100)", !tree.find(100));
 
   tree.insert(15, 0);
   tree.insert(16, 0);
   testRB(tree);
+
+  std::cout << "Tree levels: ";
   tree.walkByLevels(std::cout);
   std::cout << '\n';
 
-  int nodesToDelete[]{ 5, 11, 14, 15 };
+  int nodesToDelete[]{ 5, 11, 14 };
   for (int i : nodesToDelete)
   {
-    std::cout << "Trying to delete " << i << ": ";
-    test(tree.erase(i), "deleted\n", "not deleted\n");
+    std::cout << '(' << i << ')';
+    test("erase existing", tree.erase(i));
   }
   testRB(tree);
-  tree.insert(14, 0);
+  test("insert after delete", tree.insert(14, 0));
   testRB(tree);
 
+  std::cout << "copy/move test. If not segfaulted, test is passed\n";
   demidenko::RBTree< int, int > moved(std::move(tree));
+  testRB(moved);
+  demidenko::RBTree< int, int > copied(moved);
+  testRB(copied);
+  test("copy is equal", std::equal(moved.begin(), moved.end(), copied.begin()));
+  copied = std::move(moved);
+  testRB(copied);
+  moved = copied;
+  testRB(moved);
+  test("copy-assigned is equal", std::equal(moved.begin(), moved.end(), copied.begin()));
 }
-
-void testDestructorAfterDelete()
+void testInsertBalancing()
 {
+  std::cout << "Insert balancing test\n";
+  demidenko::RBTree< int, int > leftInsertTree;
+  for (int i : { 0, 1, -1 })
+  {
+    leftInsertTree.insert(i, 0);
+  }
+  demidenko::RBTree< int, int > rightInsertTree(leftInsertTree);
+  leftInsertTree.insert(-3, 0);
+  rightInsertTree.insert(3, 0);
+  testRB(leftInsertTree);
+  testRB(rightInsertTree);
+  leftInsertTree.insert(-2, 0);
+  rightInsertTree.insert(2, 0);
+  testRB(leftInsertTree);
+  testRB(rightInsertTree);
+}
+void testEraseBalancing()
+{
+  std::cout << "Erase balancing test\n";
+  demidenko::RBTree< int, int > leftEraseTree;
+  for (int i : { 0, 2, -2, -3 })
+  {
+    leftEraseTree.insert(i, 0);
+  }
+  leftEraseTree.erase(-3);
+  demidenko::RBTree< int, int > backup(leftEraseTree);
+  demidenko::RBTree< int, int > rightEraseTree(leftEraseTree);
+  leftEraseTree.erase(-2);
+  rightEraseTree.erase(2);
+  testRB(leftEraseTree);
+  testRB(rightEraseTree);
+
+  leftEraseTree = backup;
+  rightEraseTree = backup;
+  leftEraseTree.insert(1, 0);
+  rightEraseTree.insert(-1, 0);
+  leftEraseTree.erase(-2);
+  rightEraseTree.erase(2);
+  testRB(leftEraseTree);
+  testRB(rightEraseTree);
+
+  leftEraseTree = backup;
+  rightEraseTree = backup;
+  leftEraseTree.insert(3, 0);
+  rightEraseTree.insert(-3, 0);
+  leftEraseTree.erase(-2);
+  rightEraseTree.erase(2);
+  testRB(leftEraseTree);
+  testRB(rightEraseTree);
+
+  leftEraseTree = backup;
+  rightEraseTree = backup;
+  leftEraseTree.insert(3, 0);
+  leftEraseTree.insert(4, 0);
+  rightEraseTree.insert(-3, 0);
+  rightEraseTree.insert(-4, 0);
+  leftEraseTree.erase(-2);
+  rightEraseTree.erase(2);
+  testRB(leftEraseTree);
+  testRB(rightEraseTree);
+}
+void testDestructorAfterErase()
+{
+  std::cout << "Destructor + erase test\n";
   demidenko::RBTree< int, int > tree;
   int nodes[]{
     22376, 19148, 9064,  4536,  26826, 7510,  16348, 18792, 23507, 6724,  12960, 11559, 9879,  11023, 18260,
@@ -70,9 +148,9 @@ void testDestructorAfterDelete()
     tree.insert(i, 0);
   }
   testRB(tree);
-  std::cout << "Deleting nodes\n";
-  int nodesToDelete[]{ 12726, 2830, 1220 };
-  for (int i : nodesToDelete)
+  std::cout << "Erasing nodes\n";
+  int nodesToErase[]{ 12726, 2830, 1220 };
+  for (int i : nodesToErase)
   {
     tree.erase(i);
   }
@@ -80,8 +158,9 @@ void testDestructorAfterDelete()
   std::cout << "Testing destructor. If not segfaulted, test is successful.\n";
 }
 
-void testWalk()
+void testIterators()
 {
+  std::cout << "Iterator test\n";
   demidenko::RBTree< int, int > tree;
   int nodes[]{
     23, 16, 12, 19, 17, 24, 5, 1, 4, 7, 11, 6, 22, 20, 9, 27, 10, 2, 13, 15, 25, 18, 3, 14, 8, 29, 26, 30, 21, 28,
@@ -97,41 +176,26 @@ void testWalk()
     secondTree.insert(((i + 6) % 30) + 1, 0); // shuffling nodes.
   }
   testRB(secondTree);
-  // std::cout << "Are two equal trees equal??? "
-  //           << ((tree.isSimilar(secondTree)) ? "yes" : "no") << '\n';
-  // secondTree.insertNode(0);
-  // std::cout << "Are two unequal trees equal??? "
-  //           << ((tree.isSimilar(secondTree)) ? "yes" : "no") << '\n';
+  test("equal trees are equal", std::equal(tree.begin(), tree.end(), secondTree.begin()));
+  secondTree.insert(0, 0);
+  test("not equal trees are not equal", !std::equal(tree.begin(), tree.end(), secondTree.begin()));
 
-  demidenko::RBTree< int, int > thirdTree;
-  int otherNodes[]{ 35, 33, 39, 32, 38, 31, 37, 40, 34, 36, 0 };
-  for (int i : otherNodes)
+  demidenko::RBTree< int, int > shortTree;
+  int handfulOfNodes[]{ 10, 5, 13, 4, 7, 11, 14 };
+  for (int i : handfulOfNodes)
   {
-    thirdTree.insert(i, 0);
-  };
-  testRB(thirdTree);
-  demidenko::RBTree< int, int > forthTree;
-  demidenko::RBTree< int, int > fifthTree;
-  // std::cout << "Are two empty trees equal??? "
-  //           << ((forthTree.isSimilar(fifthTree)) ? "yes" : "no") << '\n';
-}
-void testIterators()
-{
-  demidenko::RBTree< int, int > tree;
-  int nodes[]{ 10, 5, 13, 4, 7, 11, 14 };
-  for (int i : nodes)
-  {
-    tree.insert(i, 0);
+    shortTree.insert(i, 0);
   }
-  std::transform(tree.cbegin(), tree.cend(), std::ostream_iterator< int >(std::cout, " "), [&](auto pair) {
+  std::transform(shortTree.cbegin(), shortTree.cend(), std::ostream_iterator< int >(std::cout, " "), [&](auto pair) {
     return pair.first;
   });
   std::cout << '\n';
-  tree.begin()->second = 9;
-  std::transform(tree.cbegin(), tree.cend(), std::ostream_iterator< int >(std::cout, " "), [&](auto pair) {
+  shortTree.begin()->second = 9;
+  std::transform(shortTree.cbegin(), shortTree.cend(), std::ostream_iterator< int >(std::cout, " "), [&](auto pair) {
     return pair.second;
   });
   std::cout << '\n';
+  // Does not compile:
   // tree.cbegin()->second = 9;
   // const demidenko::RBTree< int, int > consttree;
   // consttree.begin()->second = 9;
@@ -139,9 +203,13 @@ void testIterators()
 int main()
 {
   testTree();
-  testDestructorAfterDelete();
-  testWalk();
+  std::cout << '\n';
+  testInsertBalancing();
+  std::cout << '\n';
+  testEraseBalancing();
+  std::cout << '\n';
+  testDestructorAfterErase();
+  std::cout << '\n';
   testIterators();
-  std::cout << "Success\n";
   return 0;
 }

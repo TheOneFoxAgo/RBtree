@@ -131,6 +131,7 @@ void testIterators()
   std::transform(tree.cbegin(), tree.cend(), std::ostream_iterator< int >(std::cout, " "), [&](auto pair) {
     return pair.second;
   });
+  std::cout << '\n';
   // tree.cbegin()->second = 9;
   // const demidenko::RBTree< int, int > consttree;
   // consttree.begin()->second = 9;

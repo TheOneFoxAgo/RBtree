@@ -21,11 +21,59 @@ namespace demidenko
     using value_type = typename iterator::value_type;
     using key_type = const K;
     using mapped_type = T;
+
     RBTree():
       root_(nullptr),
       compare_({})
     {}
-    RBTree(const RBTree< K, T, Compare >& scr) = delete;
+    RBTree(Compare compare):
+      root_(nullptr),
+      compare_(compare)
+    {}
+    RBTree(const RBTree< K, T, Compare >& src):
+      compare_(src.compare_)
+    {
+      RBTree newTree;
+      if (src.root_)
+      {
+        newTree.root_ = new Node{ src.root_->value, Color::Black };
+        const Node* currentSrcNode = src.root_;
+        Node* currentNewNode = newTree.root_;
+        auto gotoMinCopying = [&] {
+          while (currentSrcNode->left)
+          {
+            currentSrcNode = currentSrcNode->left;
+            currentNewNode->left = new Node{ currentSrcNode->value, currentSrcNode->color, currentNewNode };
+            currentNewNode = currentNewNode->left;
+          }
+        };
+        gotoMinCopying();
+        while (currentSrcNode)
+        {
+          if (currentSrcNode->right)
+          {
+            currentSrcNode = currentSrcNode->right;
+            currentNewNode->right = new Node{ currentSrcNode->value, currentSrcNode->color, currentNewNode };
+            currentNewNode = currentSrcNode->right;
+            gotoMinCopying();
+          }
+          else
+          {
+            const Node* candidate = currentSrcNode->p;
+            while (candidate && candidate->right == currentSrcNode)
+            {
+              currentSrcNode = candidate;
+              currentNewNode = currentNewNode->p;
+              candidate = candidate->p;
+            }
+            currentSrcNode = candidate;
+            currentNewNode = currentNewNode->p;
+          }
+        }
+      }
+      root_ = newTree.root_;
+      newTree.root_ = nullptr;
+    }
     RBTree(RBTree< K, T, Compare >&& src) noexcept:
       root_(src.root_)
     {
@@ -207,33 +255,29 @@ namespace demidenko
     {
       while (colorOf(target->p) == Color::Red)
       {
-        target = partialInsertFixup(target, target->p == target->p->p->left);
+        bool isParentLeft = target->p == target->p->p->left;
+        Node* grandpa = target->p->p;
+        Node* uncle = grandpa->child(!isParentLeft);
+        if (colorOf(uncle) == Color::Red)
+        {
+          target->p->color = Color::Black;
+          uncle->color = Color::Black;
+          grandpa->color = Color::Red;
+          target = grandpa;
+        }
+        else
+        {
+          if ((target == target->p->right) == isParentLeft)
+          {
+            target = target->p;
+            rotate(target, isParentLeft);
+          }
+          target->p->color = Color::Black;
+          target->p->p->color = Color::Red;
+          rotate(target->p->p, !isParentLeft);
+        }
       }
       root_->color = Color::Black;
-    }
-    Node* partialInsertFixup(Node* target, bool isParentLeft)
-    {
-      Node* grandpa = target->p->p;
-      Node* uncle = grandpa->child(!isParentLeft);
-      if (colorOf(uncle) == Color::Red)
-      {
-        target->p->color = Color::Black;
-        uncle->color = Color::Black;
-        grandpa->color = Color::Red;
-        target = grandpa;
-      }
-      else
-      {
-        if ((target == target->p->right) == isParentLeft)
-        {
-          target = target->p;
-          rotate(target, isParentLeft);
-        }
-        target->p->color = Color::Black;
-        target->p->p->color = Color::Red;
-        rotate(target->p->p, !isParentLeft);
-      }
-      return target;
     }
     void eraseNode(Node* target)
     {
@@ -459,6 +503,7 @@ namespace demidenko
       int result = isWeakRBTree(target->right);
       if (!result || result != isWeakRBTree(target->left))
       {
+        // std::cout << target->right << ' ' << target->left << '\n';
         return 0;
       }
       return result + !isRed;

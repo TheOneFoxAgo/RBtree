@@ -31,48 +31,21 @@ namespace demidenko
       compare_(compare)
     {}
     RBTree(const RBTree< K, T, Compare >& src):
-      compare_(src.compare_)
+      compare_(src.compare_),
+      root_(nullptr)
     {
-      RBTree newTree;
       if (src.root_)
       {
-        newTree.root_ = new Node{ src.root_->value, Color::Black };
-        const Node* currentSrcNode = src.root_;
-        Node* currentNewNode = newTree.root_;
-        auto gotoMinCopying = [&] {
-          while (currentSrcNode->left)
-          {
-            currentSrcNode = currentSrcNode->left;
-            currentNewNode->left = new Node{ currentSrcNode->value, currentSrcNode->color, currentNewNode };
-            currentNewNode = currentNewNode->left;
-          }
-        };
-        gotoMinCopying();
-        while (currentSrcNode)
+        try
         {
-          if (currentSrcNode->right)
-          {
-            currentSrcNode = currentSrcNode->right;
-            currentNewNode->right = new Node{ currentSrcNode->value, currentSrcNode->color, currentNewNode };
-            currentNewNode = currentNewNode->right;
-            gotoMinCopying();
-          }
-          else
-          {
-            const Node* candidate = currentSrcNode->p;
-            while (candidate && candidate->right == currentSrcNode)
-            {
-              currentSrcNode = candidate;
-              currentNewNode = currentNewNode->p;
-              candidate = candidate->p;
-            }
-            currentSrcNode = candidate;
-            currentNewNode = currentNewNode->p;
-          }
+          root_ = new Node{ src.root_->value, Color::Black };
+          copyTree(src.root_, root_);
+        }
+        catch (...)
+        {
+          clear();
         }
       }
-      root_ = newTree.root_;
-      newTree.root_ = nullptr;
     }
     RBTree(RBTree< K, T, Compare >&& src) noexcept:
       root_(src.root_)
@@ -94,40 +67,36 @@ namespace demidenko
     }
     virtual ~RBTree()
     {
-      Node* current = root_;
-      if (current)
+      clear();
+    }
+    void clear() noexcept
+    {
+      Node* current = minNode(root_);
+      Node* temp = nullptr;
+      while (current)
       {
-        while (true)
+        temp = current;
+        if (current->right)
         {
-          if (current->left)
+          current = current->right;
+          while (current->left)
           {
             current = current->left;
           }
-          else if (current->right)
-          {
-            current = current->right;
-          }
-          else
-          {
-            Node* next = current->p;
-            if (!next)
-            {
-              delete current;
-              break;
-            }
-            if (compare_(current->value.first, next->value.first))
-            {
-              next->left = nullptr;
-            }
-            else
-            {
-              next->right = nullptr;
-            }
-            delete current;
-            current = next;
-          }
         }
+        else
+        {
+          Node* candidate = current->p;
+          while (candidate && candidate->right == current)
+          {
+            current = candidate;
+            candidate = candidate->p;
+          }
+          current = candidate;
+        }
+        delete temp;
       }
+      root_ = nullptr;
     }
     T& operator[](const K& key)
     {
@@ -234,6 +203,41 @@ namespace demidenko
   private:
     using Color = detail::Color;
     using Node = detail::Node< K, T >;
+
+    void copyTree(const Node* from, Node* to) const
+    {
+      auto gotoMinCopying = [&] {
+        while (from->left)
+        {
+          from = from->left;
+          to->left = new Node{ from->value, from->color, to };
+          to = to->left;
+        }
+      };
+      gotoMinCopying();
+      while (from)
+      {
+        if (from->right)
+        {
+          from = from->right;
+          to->right = new Node{ from->value, from->color, to };
+          to = to->right;
+          gotoMinCopying();
+        }
+        else
+        {
+          const Node* candidate = from->p;
+          while (candidate && candidate->right == from)
+          {
+            from = candidate;
+            to = to->p;
+            candidate = candidate->p;
+          }
+          from = candidate;
+          to = to->p;
+        }
+      }
+    }
     Node* insertNode(Node* candidate, const K& key, const T& value)
     {
       if (!candidate)

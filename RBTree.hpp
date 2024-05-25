@@ -16,8 +16,11 @@ namespace demidenko
   class RBTree
   {
   public:
-    using Iterator = RBTreeIterator< K, T, Compare, false >;
-    using ConstIterator = RBTreeIterator< K, T, Compare, true >;
+    using iterator = RBTreeIterator< K, T, Compare, false >;
+    using const_iterator = RBTreeIterator< K, T, Compare, true >;
+    using value_type = typename iterator::value_type;
+    using key_type = const K;
+    using mapped_type = T;
     RBTree():
       root_(nullptr),
       compare_({})
@@ -149,29 +152,29 @@ namespace demidenko
         }
       }
     }
-    Iterator begin()
+    iterator begin()
     {
-      return Iterator(minNode(root_));
+      return iterator(minNode(root_));
     }
-    ConstIterator begin() const
+    const_iterator begin() const
     {
-      return ConstIterator(minNode(root_));
+      return const_iterator(minNode(root_));
     }
-    ConstIterator cbegin() const
+    const_iterator cbegin() const
     {
-      return ConstIterator(minNode(root_));
+      return const_iterator(minNode(root_));
     }
-    Iterator end()
+    iterator end()
     {
-      return Iterator(nullptr);
+      return iterator(nullptr);
     }
-    ConstIterator end() const
+    const_iterator end() const
     {
-      return ConstIterator(nullptr);
+      return const_iterator(nullptr);
     }
-    ConstIterator cend() const
+    const_iterator cend() const
     {
-      return ConstIterator(nullptr);
+      return const_iterator(nullptr);
     }
 
   private:

@@ -72,10 +72,8 @@ namespace demidenko
     void clear() noexcept
     {
       Node* current = minNode(root_);
-      Node* temp = nullptr;
       while (current)
       {
-        temp = current;
         if (current->right)
         {
           current = current->right;
@@ -89,12 +87,13 @@ namespace demidenko
           Node* candidate = current->p;
           while (candidate && candidate->right == current)
           {
+            delete current;
             current = candidate;
             candidate = candidate->p;
           }
+          delete current;
           current = candidate;
         }
-        delete temp;
       }
       root_ = nullptr;
     }

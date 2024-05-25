@@ -135,7 +135,7 @@ namespace demidenko
     T& at(const K& key)
     {
       Node* candidate = findNode(key);
-      if (candidate && key == candidate->value.first)
+      if (candidate && areKeysEqual(key, candidate->value.first))
       {
         return candidate->value.second;
       }
@@ -144,7 +144,7 @@ namespace demidenko
     const T& at(const K& key) const
     {
       Node* candidate = findNode(key);
-      if (candidate && key == candidate->value.first)
+      if (candidate && areKeysEqual(key, candidate->value.first))
       {
         return candidate->value.second;
       }
@@ -153,7 +153,7 @@ namespace demidenko
     bool find(const K& key) const
     {
       Node* candidate = findNode(key);
-      return candidate && key == candidate->value.first;
+      return candidate && areKeysEqual(key, candidate->value.first);
     }
     bool insert(const K& key, const T& value)
     {
@@ -235,7 +235,7 @@ namespace demidenko
         root_ = new Node{ std::make_pair(key, value), Color::Black };
         return root_;
       }
-      else if (key == candidate->value.first)
+      else if (areKeysEqual(key, candidate->value.first))
       {
         return nullptr;
       }
@@ -402,7 +402,7 @@ namespace demidenko
       bool hasFound = root_ == nullptr;
       while (!hasFound)
       {
-        if (key == current->value.first)
+        if (areKeysEqual(key, current->value.first))
         {
           hasFound = true;
         }
@@ -518,6 +518,10 @@ namespace demidenko
       {
         return Color::Black;
       }
+    }
+    bool areKeysEqual(const K& first, const K& second) const
+    {
+      return !(compare_(first, second) || compare_(second, first));
     }
 
     Node* root_;

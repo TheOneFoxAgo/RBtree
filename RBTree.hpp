@@ -513,7 +513,7 @@ namespace demidenko
         return 0;
       }
       int result = isWeakRBTree(target->right);
-      if (!result || result != isWeakRBTree(target->left))
+      if ((result == 0) || (result != isWeakRBTree(target->left)))
       {
         return 0;
       }

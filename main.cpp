@@ -34,8 +34,8 @@ void testTree()
   test("insert existing(13)", !tree.insert(13, 0));
   test("insert existing(4)", !tree.insert(4, 0));
   testRB(tree);
-  test("find existing(4)", tree.find(4));
-  test("find not existing(100)", !tree.find(100));
+  test("find existing(4)", tree.count(4));
+  test("find not existing(100)", !tree.count(100));
 
   tree.insert(15, 0);
   tree.insert(16, 0);

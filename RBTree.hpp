@@ -100,7 +100,7 @@ namespace demidenko
     T& operator[](const K& key)
     {
       Node* candidate = findNode(key);
-      if (!candidate || key != candidate->value.first)
+      if (!candidate || !areKeysEqual(key, candidate->value.first))
       {
         candidate = insert(key, T());
       }
@@ -124,10 +124,28 @@ namespace demidenko
       }
       throw std::out_of_range("There are no such element\n");
     }
-    bool find(const K& key) const
+    int count(const K& key) const
     {
       Node* candidate = findNode(key);
       return candidate && areKeysEqual(key, candidate->value.first);
+    }
+    iterator lowerBound(const K& key)
+    {
+      iterator iter{ findNode(key) };
+      if (iter != end() && compare_(*iter, key))
+      {
+        ++iter;
+      }
+      return iter;
+    }
+    const_iterator lowerBound(const K& key) const
+    {
+      const_iterator iter{ findNode(key) };
+      if (iter != end() && compare_(*iter, key))
+      {
+        ++iter;
+      }
+      return iter;
     }
     bool insert(const K& key, const T& value)
     {
@@ -136,7 +154,7 @@ namespace demidenko
     bool erase(const K& key)
     {
       Node* target = findNode(key);
-      if (!target || key != target->value.first)
+      if (!target || !areKeysEqual(key, target->value.first))
       {
         return false;
       }
